@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket
+import sys
 
 app = FastAPI()
 
@@ -6,5 +7,6 @@ app = FastAPI()
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Message received: {data}")
+        data = await websocket.receive_bytes()
+        print(len(data))
+        await websocket.send_bytes(data)  # Echo back the received bytes

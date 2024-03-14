@@ -6,10 +6,14 @@ async def send_messages():
     uri = "ws://localhost:8000/ws"  # Change this to your server address
     async with websockets.connect(uri) as websocket:
         message_id = 1;
+        
         while True:
             message = str(message_id) + ". Message"
             message_id += 1
             
+            # Create a 1mb of data and send it through socket
+            message = bytes([ord('X')] * 1000000)
+
             #if message.lower() == 'exit':
             #    break
             
