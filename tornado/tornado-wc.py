@@ -105,7 +105,61 @@ if __name__ == "__main__":
 
     # Calculate throughput in bits per second (bps)
     # Message size: 1 KB (1 KB = 8,192 bits)
-    message_size_bits = 10 * 8192  # 10 KB to bits
+    message_size_bits = 100 * 8192  # 100 KB to bits
     total_time_seconds = sum(client.total_latency for client in clients)
     throughput_bps = (total_messages_sent * message_size_bits) / total_time_seconds
     print("Throughput:", throughput_bps / 1000, "kbps")
+
+
+"""
+if __name__ == "__main__":
+    num_clients = 20  # Number of concurrent clients
+    num_messages_per_client = 1000  # Number of messages each client sends
+    clients = []
+
+    total_latency = 0  # To store total latency from all clients
+
+    # Create client instances and threads
+    threads = []
+    for i in range(num_clients):
+        client = Client("ws://localhost:3000/", num_messages_per_client)
+        clients.append(client)
+        thread = threading.Thread(target=connect_client, args=(client,))
+        threads.append(thread)
+
+    # Start threads
+    for thread in threads:
+        thread.start()
+
+    num_threads = threading.active_count()
+
+    # Wait for all threads to complete
+    for thread in threads:
+        thread.join()
+
+    # Get number of threads and cores
+    num_cores = os.cpu_count()
+    print(f"Number of cores : {num_cores}")
+    print(f"Number of threads utilized: {num_threads}")
+
+
+
+    # Calculate total latency and messages sent
+    for client in clients:
+        total_latency += client.total_latency
+
+    total_messages_sent = num_clients * num_messages_per_client
+
+
+    # Calculate average latency
+    average_latency = total_latency / total_messages_sent
+    print("Average Latency:", average_latency, "seconds per message")
+
+    # Calculate throughput in bits per second (bps)
+    # Message size: 1 KB (1 KB = 8,192 bits)
+    message_size_bits = 100 * 8192  # 100 KB to bits
+    total_time_seconds = sum(client.total_latency for client in clients)
+    throughput_bps = (total_messages_sent * message_size_bits) / total_time_seconds
+    print("Throughput:", throughput_bps / 1000, "kbps")
+
+"""
