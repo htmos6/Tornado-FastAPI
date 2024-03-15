@@ -1,60 +1,164 @@
 import websocket
 import time
-import xlsxwriter
-
+import threading
+import os
 
 class Client:
-    def __init__(self, url):
+    def __init__(self, url, num_messages, message_size_kb):
         self.url = url
+        self.num_messages = num_messages
         self.ws = websocket.WebSocketApp(url,
-                                        on_open=self.on_open,
-                                        on_message=self.on_message,
-                                        on_error=self.on_error,
-                                        on_close=self.on_close)
+                                          on_open=self.on_open,
+                                          on_message=self.on_message,
+                                          on_error=self.on_error,
+                                          on_close=self.on_close)
         
-        self.start_time = 0
-        self.end_time = 0
-        self.workbook = xlsxwriter.Workbook('C:/Users/Legion/Desktop/tankX/100KB-10kTimes.xlsx')
-        self.worksheet = self.workbook.add_worksheet()
-
-        self.sent_message = 0
-
+        # Initialize variables to track message sending and latency
+        self.sent_messages = 0
+        self.total_latency = 0
+        self.message = bytes([ord('X')] * message_size_kb)  # 10KB message
+        self.connection_established = False
 
     def on_open(self, ws):
-        #print("WebSocket opened")
-        message = bytes([ord('X')] * 102400)
-        self.start_time = time.time()
-        ws.send(message)
+        # WebSocket connection is established
+        print(f"Socket connected")
+        self.connection_established = True
+        self.send_messages()
 
     def on_message(self, ws, message):
+        # Message received, calculate latency and send more messages if needed
         self.end_time = time.time()
-        #print("Elapsed Time:", self.end_time - self.start_time)
+        latency = self.end_time - self.start_time
+        self.total_latency += latency
+        self.sent_messages += 1
 
-        self.save_elapsed_time(self.end_time - self.start_time)
-
-        # Close WebSocket after sending 10 messages
-        self.sent_message += 1
-        if self.sent_message == 10_000:
-            self.workbook.close()
+        # If not all messages have been sent, send more
+        if self.sent_messages < self.num_messages:
+            self.send_messages()
+        else:
             self.ws.close()
 
-        self.on_open(self.ws)
-
     def on_close(self, ws):
-        self.workbook.close()
-        #print("WebSocket closed")
+        pass
 
     def on_error(self, ws, error):
         print("Error:", error)
 
-    def run_forever(self):
+    def run(self):
+        # Run WebSocket connection
         self.ws.run_forever()
+    
+    def send_messages(self):
+        # Send messages if connection is established
+        if not self.connection_established:
+            print("Error: Connection not established.")
+            return
 
-    def save_elapsed_time(self, time_difference):
-        self.worksheet.write(self.sent_message - 1, 0, time_difference)
+        self.start_time = time.time()
+        self.ws.send(self.message)
 
+def connect_client(client):
+    client.run()
 
 if __name__ == "__main__":
-    #websocket.enableTrace(True)
-    client = Client("ws://localhost:3000/")
-    client.run_forever()
+    num_clients = 20 # Number of concurrent clients
+    num_messages_per_client = 1000  # Number of messages each client sends
+    message_size_kb = 102400 # 100 kb message
+    # 10240 = 10 kb message
+
+    clients = []
+
+    total_latency = 0  # To store total latency from all clients
+
+    # Create client instances and threads
+    threads = []
+
+    for _ in range(num_clients):
+        client = Client("ws://localhost:3000/", num_messages_per_client, message_size_kb)
+        clients.append(client)
+        thread = threading.Thread(target=client.run)
+        threads.append(thread)
+
+    start_time_for_communication = time.time()
+
+    # Start threads
+    for thread in threads:
+        thread.start()
+    
+    num_threads = threading.active_count()
+
+    # Wait for all threads to complete
+    for thread in threads:
+        thread.join()
+
+    end_time_for_communication = time.time()
+    
+    # Get number of threads and cores
+    num_cores = os.cpu_count()
+    print(f"Number of cores : {num_cores}")
+    print(f"Number of threads utilized: {num_threads}")
+
+    # Calculate total latency and messages sent
+    for client in clients:
+        total_latency += client.total_latency
+
+    total_messages_sent = num_clients * num_messages_per_client
+
+    # Calculate average latency
+    average_latency = total_latency / total_messages_sent
+    print("Average Latency:", average_latency, "seconds per message")
+
+    # Calculate throughput in bits per second (bps)
+    # Message size: 1 KB (1 KB = 8,192 bits)
+    message_size_bits = message_size_kb * 8 # message size KB to bits  # 100 KB to bits
+    total_time_seconds = end_time_for_communication - start_time_for_communication
+    throughput_bps = (total_messages_sent * message_size_bits) / total_time_seconds
+    print("Throughput:", throughput_bps / 1000, "kbps")
+    print("Total Processing Time:", total_time_seconds, "seconds")
+
+
+"""
+if __name__ == "__main__":
+    num_clients = 20 # Number of concurrent clients
+    num_messages_per_client = 1000  # Number of messages each client sends
+    message_size_kb = 102400 # 100 kb message
+    clients = []
+
+    total_latency = 0  # To store total latency from all clients
+
+    # Create client instances and threads
+    threads = []
+
+    for i in range(num_clients):
+        client = Client("ws://localhost:3000/", num_messages_per_client, message_size_kb)
+        clients.append(client)
+        client.run()
+
+    num_threads = threading.active_count()
+
+    # Get number of threads and cores
+    num_cores = os.cpu_count()
+    print(f"Number of cores : {num_cores}")
+    print(f"Number of threads utilized: {num_threads}")
+
+
+
+    # Calculate total latency and messages sent
+    for client in clients:
+        total_latency += client.total_latency
+
+    total_messages_sent = num_clients * num_messages_per_client
+
+
+    # Calculate average latency
+    average_latency = total_latency / total_messages_sent
+    print("Average Latency:", average_latency, "seconds per message")
+
+    # Calculate throughput in bits per second (bps)
+    # Message size: 1 KB (1 KB = 8,192 bits)
+    message_size_bits = message_size_kb * 8 # message size KB to bits
+    total_time_seconds = sum(client.total_latency for client in clients)
+    throughput_bps = (total_messages_sent * message_size_bits) / total_time_seconds
+    print("Throughput:", throughput_bps / 1000, "kbps")
+
+"""
