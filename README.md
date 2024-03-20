@@ -1,6 +1,3 @@
-FastAPI How to Run server?
-Run the following to create a web server --> uvicorn fastapi-ws:app --reload
-
 ### WebSocket Communication Benchmarking and Visualization
 This project includes scripts for benchmarking WebSocket communication performance using various Python frameworks (FastAPI and Tornado) and visualizing the results using Matplotlib.
 
