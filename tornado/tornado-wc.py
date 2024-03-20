@@ -60,6 +60,7 @@ class Client:
 def connect_client(client):
     client.run()
 
+# Multi thread testing
 if __name__ == "__main__":
     num_clients = 20 # Number of concurrent clients
     num_messages_per_client = 1000  # Number of messages each client sends
@@ -118,6 +119,7 @@ if __name__ == "__main__":
 
 
 """
+# Single thread used
 if __name__ == "__main__":
     num_clients = 20 # Number of concurrent clients
     num_messages_per_client = 1000  # Number of messages each client sends
