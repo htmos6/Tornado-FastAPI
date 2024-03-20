@@ -1,5 +1,5 @@
 
-Go to the directory --> C:\Users\Legion\Desktop\tankX\venv\Scripts>
+Go to the directory --> C:\.....\.....\venv\Scripts>
 Run the following --> activate
 
 FastAPI How to Run server?
