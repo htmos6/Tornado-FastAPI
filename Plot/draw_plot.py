@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Read data from Excel file into a pandas DataFrame
-data = pd.read_excel('C:/Users/Legion/Desktop/tankX/100000Bto10kTimes.xlsx', header=None, names=['y'])
+data = pd.read_excel('C:/Users/Legion/Desktop/.../100000Bto10kTimes.xlsx', header=None, names=['y'])
 
 # Create an 'x' column as the index of the DataFrame
 data['x'] = data.index
